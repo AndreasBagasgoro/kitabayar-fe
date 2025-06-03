@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import SearchField from '@/app/components/ui/search/page';
 import MenuCard from '@/app/components/menu_card/page';
+import { useCart } from '@/app/components/context/page'; // Tambahkan import useCart
 
 
 // Interface untuk MenuItem
@@ -16,6 +17,7 @@ interface MenuItem {
 }
 
 // Interface untuk Cart Item
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface CartItem extends MenuItem {
   quantity: number;
 }
@@ -29,8 +31,10 @@ const MenuPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   
   // State untuk cart
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCartNotification, setShowCartNotification] = useState<boolean>(false);
+
+  // Ambil cart context
+  const { cartItems, addToCart, getTotalCartItems, getTotalCartPrice, formatRupiah } = useCart();
 
   // Data menu dummy - dalam implementasi nyata bisa dari API
   const initialMenuData: MenuItem[] = [
@@ -38,7 +42,7 @@ const MenuPage: React.FC = () => {
       id: 1,
       name: "Nasi Gudeg Jogja",
       price: "25.000",
-      image: "/images/gudeg.jpg",
+      image: "/image/gudeg.jpg",
       category: "traditional",
       description: "Gudeg khas Jogja dengan kuah santan yang gurih"
     },
@@ -46,7 +50,7 @@ const MenuPage: React.FC = () => {
       id: 2,
       name: "Sate Ayam Madura",
       price: "30.000",
-      image: "/images/sate.jpg",
+      image: "/image/sate.jpg",
       category: "grilled",
       description: "Sate ayam dengan bumbu kacang khas Madura"
     },
@@ -54,7 +58,7 @@ const MenuPage: React.FC = () => {
       id: 3,
       name: "Rendang Daging",
       price: "45.000",
-      image: "/images/rendang.jpg",
+      image: "/image/rendang.jpg",
       category: "traditional",
       description: "Rendang daging sapi dengan rempah-rempah pilihan"
     },
@@ -62,7 +66,7 @@ const MenuPage: React.FC = () => {
       id: 4,
       name: "Gado-Gado Jakarta",
       price: "20.000",
-      image: null,
+      image: "/image/gadogado.jpg",
       category: "salad",
       description: "Gado-gado segar dengan bumbu kacang"
     },
@@ -70,7 +74,7 @@ const MenuPage: React.FC = () => {
       id: 5,
       name: "Ayam Bakar Taliwang",
       price: "35.000",
-      image: "/images/ayam-bakar.jpg",
+      image: "/image/ayam-bakar.jpg",
       category: "grilled",
       description: "Ayam bakar dengan sambal taliwang pedas"
     },
@@ -78,7 +82,7 @@ const MenuPage: React.FC = () => {
       id: 6,
       name: "Soto Betawi",
       price: "28.000",
-      image: null,
+      image: "/image/soto.jpg",
       category: "soup",
       description: "Soto Betawi dengan kuah santan dan daging sapi"
     },
@@ -86,7 +90,7 @@ const MenuPage: React.FC = () => {
       id: 7,
       name: "Nasi Liwet Solo",
       price: "22.000",
-      image: "/images/liwet.jpg",
+      image: "/image/nasi-liwet.jpg",
       category: "traditional",
       description: "Nasi liwet dengan lauk pauk tradisional"
     },
@@ -94,7 +98,7 @@ const MenuPage: React.FC = () => {
       id: 8,
       name: "Pecel Lele",
       price: "18.000",
-      image: null,
+      image: "/image/pecel-lele.jpg", // Ganti dengan URL gambar pecel lele null,
       category: "fried",
       description: "Lele goreng dengan sambal pecel dan lalapan"
     }
@@ -123,6 +127,7 @@ const MenuPage: React.FC = () => {
     };
 
     loadMenuData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // useEffect untuk filter berdasarkan search dan category
@@ -165,46 +170,12 @@ const MenuPage: React.FC = () => {
     setSelectedCategory(category);
   };
 
-  // Handler untuk add to cart
+  // Handler untuk add to cart, gunakan context
   const handleAddToCart = (item: MenuItem) => {
-    setCartItems(prevCart => {
-      const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
-      
-      if (existingItem) {
-        // Jika item sudah ada di cart, tambah quantity
-        return prevCart.map(cartItem =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        );
-      } else {
-        // Jika item belum ada di cart, tambah item baru
-        return [...prevCart, { ...item, quantity: 1 }];
-      }
-    });
-
-    // Show notification
+    addToCart(item);
     setShowCartNotification(true);
     
     console.log('Item added to cart:', item);
-  };
-
-  // Hitung total items di cart
-  const getTotalCartItems = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  // Hitung total harga cart
-  const getTotalCartPrice = () => {
-    return cartItems.reduce((total, item) => {
-      const price = parseInt(item.price.replace(/\./g, ''));
-      return total + (price * item.quantity);
-    }, 0);
-  };
-
-  // Format rupiah
-  const formatRupiah = (amount: number) => {
-    return new Intl.NumberFormat('id-ID').format(amount);
   };
 
   // Loading component
