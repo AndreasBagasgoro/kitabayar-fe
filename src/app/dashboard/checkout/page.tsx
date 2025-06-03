@@ -1,13 +1,23 @@
 "use client";
 
 import OrderCart from '@/app/components/order_card/page';
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart } from '@/app/components/context/page'; // Sesuaikan path import sesuai struktur proyek Anda
 
 const CheckoutPage: React.FC = () => {
   const { getTotalCartPrice, formatRupiah } = useCart();
   const adminFee: number = 2500;
   const totalWithAdmin: number = getTotalCartPrice() + adminFee;
+
+  // Tambahkan state untuk modal
+  const [showModal, setShowModal] = useState(false);
+
+  // Handler untuk konfirmasi pembayaran
+  const handleConfirm = () => {
+    setShowModal(false);
+    // Tambahkan aksi setelah konfirmasi jika diperlukan
+    // Misal: alert('Pembayaran dikonfirmasi!');
+  };
 
   return (
     <div className="space-y-6">
@@ -39,12 +49,41 @@ const CheckoutPage: React.FC = () => {
                 <span>Rp {formatRupiah(totalWithAdmin)}</span>
               </div>
             </div>
-            <button className="w-full mt-6 bg-[#d9291a] text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">
+            <button
+              className="w-full mt-6 bg-[#d9291a] text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+              onClick={() => setShowModal(true)}
+            >
               Bayar Sekarang
             </button>
           </div>
         </div>
       </div>
+
+      {/* Modal Konfirmasi Pembayaran */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/10">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Konfirmasi Pembayaran</h3>
+            <p className="mb-6 text-gray-700">
+              Total pembayaran: <span className="font-semibold text-[#d9291a]">Rp {formatRupiah(totalWithAdmin)}</span>
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+                onClick={() => setShowModal(false)}
+              >
+                Batal
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-[#d9291a] text-white hover:bg-red-700 transition"
+                onClick={handleConfirm}
+              >
+                Konfirmasi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

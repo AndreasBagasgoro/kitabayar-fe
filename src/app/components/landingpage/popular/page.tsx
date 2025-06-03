@@ -2,6 +2,7 @@
 
 import PopularCard from "../../popular_card/page"
 import { useState } from "react"
+import Link from 'next/link';
 
 // Interface langsung di file ini
 interface PopularItem {
@@ -15,21 +16,21 @@ const Popular = () => {
   const [popularItems] = useState<PopularItem[]>([
     {
       id: 1,
-      name: "Margherita Pizza",
-      price: "18.99",
-      image: null,
+      name: "Rendang Daging",
+      price: "45.000",
+      image: "/image/rendang.jpg", 
     },
     {
       id: 2,
-      name: "Chicken Burger",
-      price: "12.99",
-      image: null,
+      name: "Ayam Bakar Taliwang",
+      price: "35.000",
+      image: "/image/ayam-bakar.jpg",
     },
     {
       id: 3,
-      name: "Caesar Salad",
-      price: "9.99",
-      image: null,
+      name: "Pecel Lele",
+      price: "18.000",
+      image: "image/pecel-lele.jpg",
     },
   ])
 
@@ -50,6 +51,7 @@ const Popular = () => {
       </div>
 
       {/* View Full Menu Button */}
+      <Link href="/dashboard/menu" className="block">
       <div className="text-center">
         <button
           className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors text-base font-medium"
@@ -57,6 +59,7 @@ const Popular = () => {
           View Full Menu
         </button>
       </div>
+      </Link>
     </div>
   )
 }

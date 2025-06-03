@@ -40,7 +40,7 @@ const PopularCard: FC<PopularCardProps> = ({ item, onClick }) => {
         <h3 className="font-semibold text-gray-900 text-base leading-tight">
           {item.name}
         </h3>
-        <p className="text-orange-500 font-bold text-lg">${item.price}</p>
+        <p className="text-orange-500 font-bold text-lg">Rp {item.price}</p>
       </div>
     </div>
   )
