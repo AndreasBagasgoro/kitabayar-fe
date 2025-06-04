@@ -13,7 +13,7 @@ interface MenuItem {
 }
 
 // Interface untuk Cart Item
-interface CartItem extends MenuItem {
+export interface CartItem extends MenuItem {
   quantity: number;
 }
 
@@ -92,7 +92,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Get total price
   const getTotalCartPrice = (): number => {
     return cartItems.reduce((total: number, item: CartItem) => {
-      const price: number = parseInt(item.price.replace(/\./g, ''));
+      const price: number = parseFloat(item.price);
       return total + (price * item.quantity);
     }, 0);
   };
