@@ -1,23 +1,103 @@
 "use client";
 
 import OrderCart from '@/app/components/order_card/page';
-import React, { useState } from 'react';
-import { useCart } from '@/app/components/context/page'; // Sesuaikan path import sesuai struktur proyek Anda
+import React, { useEffect, useState } from 'react';
+import { useCart, CartItem } from '@/app/components/context/page'; // Sesuaikan path import sesuai struktur proyek Anda
+import axios from 'axios';
+
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
 
 const CheckoutPage: React.FC = () => {
-  const { getTotalCartPrice, formatRupiah } = useCart();
+  const { cartItems, getTotalCartPrice, formatRupiah } = useCart();
   const adminFee: number = 2500;
   const totalWithAdmin: number = getTotalCartPrice() + adminFee;
 
   // Tambahkan state untuk modal
   const [showModal, setShowModal] = useState(false);
+  
+
+//   type CartItem = {
+//   id: number;
+//   name: string;
+//   price: number;
+//   quantity: number;
+// };
+
+
+  const payload = {
+  user_uuid: "cb412473-53fb-4360-add2-28a1ac00f585", 
+  restaurant_id: 1,
+  total_amount: totalWithAdmin,
+  delivery_address: {
+    street: "Jalan Mawar",
+    city: "Bandung",
+    postal_code: "40123"
+  },
+  items: cartItems.map((item: CartItem) => {
+    const priceNum = parseInt(item.price.replace(/\./g, ''), 10); // convert string price to number
+    return {
+      menu_item_id: item.id,
+      menu_item_snapshot: {
+        name: item.name,
+        price: priceNum,
+      },
+      quantity: item.quantity,
+      total_price: priceNum * item.quantity,
+    };
+  })
+};
+
+
+  useEffect(() => {
+  const script = document.createElement('script');
+  script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+  script.setAttribute('data-client-key', 'SB-Mid-client-TStFVfFHdB_COqUj');
+  script.async = true;
+  document.body.appendChild(script);
+}, []);
 
   // Handler untuk konfirmasi pembayaran
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+      try {
+    const res = await axios.post('http://localhost:8000/orders/orders', payload);
+    const redirectUrl = res.data?.payment?.redirect_url; // or snap_token
+
+    if (window.snap && res.data.payment?.snap_token) {
+      window.snap.pay(res.data.payment.snap_token, {
+        onSuccess: function(result: any) {
+          alert("Pembayaran berhasil!");
+          console.log(result);
+        },
+        onPending: function(result: any) {
+          alert("Menunggu pembayaran...");
+        },
+        onError: function(result: any) {
+          alert("Pembayaran gagal!");
+          console.error(result);
+        },
+        onClose: function() {
+          alert("Anda menutup popup tanpa menyelesaikan pembayaran");
+        }
+      });
+    } else if (redirectUrl) {
+      window.location.href = redirectUrl;
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+    console.error("Gagal memproses pembayaran:", error.response?.data);
+  } else {
+    console.error("Gagal memproses pembayaran:", error);
+  }
+  } finally {
     setShowModal(false);
-    // Tambahkan aksi setelah konfirmasi jika diperlukan
-    // Misal: alert('Pembayaran dikonfirmasi!');
-  };
+  }
+};
+
+
 
   return (
     <div className="space-y-6">

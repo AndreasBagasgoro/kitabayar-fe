@@ -2,6 +2,7 @@ import api from './client';
 
 export const getMenuItemsByRestaurant = async (restaurantId: string) => {
   const res = await api.get(`/restaurants/restaurants/${restaurantId}/menu-items`);
+  console.log('API result:', res.data);
   return res.data;
 };
 

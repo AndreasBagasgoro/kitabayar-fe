@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import SearchField from '@/app/components/ui/search/page';
 import MenuCard from '@/app/components/menu_card/page';
 import { useCart } from '@/app/components/context/page'; // Tambahkan import useCart
+import { getMenuItemsByRestaurant } from '../../../../services/api/menuItems';
+import { getRestaurants } from '../../../../services/api/restaurant';
 
 
 // Interface untuk MenuItem
@@ -114,22 +116,26 @@ const MenuPage: React.FC = () => {
     { id: 'salad', name: 'Salad' }
   ];
 
+  const restaurantId = '1';
+
   // useEffect untuk load data menu
-  useEffect(() => {
-    // Simulasi loading data
-    const loadMenuData = async () => {
+useEffect(() => {
+  const loadMenuData = async () => {
+    try {
       setLoading(true);
-      // Simulasi delay API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMenuItems(initialMenuData);
-      setFilteredItems(initialMenuData);
+      const response = await getMenuItemsByRestaurant(restaurantId);
+      // Asumsikan response sudah berbentuk array sesuai interface MenuItem
+      setMenuItems(response);
+      setFilteredItems(response);
+    } catch (error) {
+      console.error('Gagal memuat menu:', error);
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
-    loadMenuData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  loadMenuData();
+}, []);
   // useEffect untuk filter berdasarkan search dan category
   useEffect(() => {
     let filtered = menuItems;

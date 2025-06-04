@@ -27,3 +27,16 @@ export default function Home() {
     </div>
   );
 }
+
+const testRestaurants = async () => {
+  const res = await fetch('http://localhost:8000/restaurants/restaurants');
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    console.log('Data:', data);
+  } catch (error) {
+    console.error('Failed to parse JSON, raw response:', text);
+  }
+};
+
+testRestaurants();

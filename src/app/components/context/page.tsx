@@ -13,7 +13,7 @@ interface MenuItem {
 }
 
 // Interface untuk Cart Item
-interface CartItem extends MenuItem {
+export interface CartItem extends MenuItem {
   quantity: number;
 }
 
