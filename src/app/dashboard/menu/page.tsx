@@ -6,6 +6,9 @@ import MenuCard from '@/app/components/menu_card/page';
 import { useCart } from '@/app/components/context/page'; // Tambahkan import useCart
 import { getMenuItemsByRestaurant } from '../../../../services/api/menuItems';
 import { getRestaurants } from '../../../../services/api/restaurant';
+import { useRouter } from 'next/navigation'
+
+
 
 
 // Interface untuk MenuItem
@@ -25,118 +28,55 @@ interface CartItem extends MenuItem {
 }
 
 const MenuPage: React.FC = () => {
+
+  const router = useRouter();
+
+  // Ambil cart context
+  const { cartItems, addToCart, getTotalCartItems, getTotalCartPrice, formatRupiah } = useCart();
+  
+
   // State untuk menyimpan data menu
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState<boolean>(true);
   
+  
   // State untuk cart
   const [showCartNotification, setShowCartNotification] = useState<boolean>(false);
 
-  // Ambil cart context
-  const { cartItems, addToCart, getTotalCartItems, getTotalCartPrice, formatRupiah } = useCart();
+  
 
-  // Data menu dummy - dalam implementasi nyata bisa dari API
-  const initialMenuData: MenuItem[] = [
-    {
-      id: 1,
-      name: "Nasi Gudeg Jogja",
-      price: "25.000",
-      image: "/image/gudeg.jpg",
-      category: "traditional",
-      description: "Gudeg khas Jogja dengan kuah santan yang gurih"
-    },
-    {
-      id: 2,
-      name: "Sate Ayam Madura",
-      price: "30.000",
-      image: "/image/sate.jpg",
-      category: "grilled",
-      description: "Sate ayam dengan bumbu kacang khas Madura"
-    },
-    {
-      id: 3,
-      name: "Rendang Daging",
-      price: "45.000",
-      image: "/image/rendang.jpg",
-      category: "traditional",
-      description: "Rendang daging sapi dengan rempah-rempah pilihan"
-    },
-    {
-      id: 4,
-      name: "Gado-Gado Jakarta",
-      price: "20.000",
-      image: "/image/gadogado.jpg",
-      category: "salad",
-      description: "Gado-gado segar dengan bumbu kacang"
-    },
-    {
-      id: 5,
-      name: "Ayam Bakar Taliwang",
-      price: "35.000",
-      image: "/image/ayam-bakar.jpg",
-      category: "grilled",
-      description: "Ayam bakar dengan sambal taliwang pedas"
-    },
-    {
-      id: 6,
-      name: "Soto Betawi",
-      price: "28.000",
-      image: "/image/soto.jpg",
-      category: "soup",
-      description: "Soto Betawi dengan kuah santan dan daging sapi"
-    },
-    {
-      id: 7,
-      name: "Nasi Liwet Solo",
-      price: "22.000",
-      image: "/image/nasi-liwet.jpg",
-      category: "traditional",
-      description: "Nasi liwet dengan lauk pauk tradisional"
-    },
-    {
-      id: 8,
-      name: "Pecel Lele",
-      price: "18.000",
-      image: "/image/pecel-lele.jpg", // Ganti dengan URL gambar pecel lele null,
-      category: "fried",
-      description: "Lele goreng dengan sambal pecel dan lalapan"
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsAuthenticated(false);
+      router.replace('/login');
+    } else {
+      setIsAuthenticated(true);
     }
-  ];
+  }, [router]);
 
-  // Categories untuk filter
-  const categories = [
-    { id: 'all', name: 'Semua Menu' },
-    { id: 'traditional', name: 'Tradisional' },
-    { id: 'grilled', name: 'Bakar/Panggang' },
-    { id: 'fried', name: 'Goreng' },
-    { id: 'soup', name: 'Kuah/Sup' },
-    { id: 'salad', name: 'Salad' }
-  ];
+    useEffect(() => {
+    const loadMenuData = async () => {
+      try {
+        setLoading(true);
+        const response = await getMenuItemsByRestaurant('1');
+        setMenuItems(response);
+        setFilteredItems(response);
+      } catch (error) {
+        console.error('Gagal memuat menu:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const restaurantId = '1';
+    loadMenuData();
+  }, []);
 
-  // useEffect untuk load data menu
-useEffect(() => {
-  const loadMenuData = async () => {
-    try {
-      setLoading(true);
-      const response = await getMenuItemsByRestaurant(restaurantId);
-      // Asumsikan response sudah berbentuk array sesuai interface MenuItem
-      setMenuItems(response);
-      setFilteredItems(response);
-    } catch (error) {
-      console.error('Gagal memuat menu:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  loadMenuData();
-}, []);
-  // useEffect untuk filter berdasarkan search dan category
+    // useEffect untuk filter berdasarkan search dan category
   useEffect(() => {
     let filtered = menuItems;
 
@@ -165,6 +105,26 @@ useEffect(() => {
       return () => clearTimeout(timer);
     }
   }, [showCartNotification]);
+
+    if (isAuthenticated === null) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d9291a]"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return null;
+
+  // Categories untuk filter
+  const categories = [
+    { id: 'all', name: 'Semua Menu' },
+    { id: 'traditional', name: 'Tradisional' },
+    { id: 'grilled', name: 'Bakar/Panggang' },
+    { id: 'fried', name: 'Goreng' },
+    { id: 'soup', name: 'Kuah/Sup' },
+    { id: 'salad', name: 'Salad' }
+  ];
 
   // Handler untuk search
   const handleSearch = (query: string) => {
@@ -342,5 +302,5 @@ useEffect(() => {
     </div>
   );
 };
-
+  
 export default MenuPage;

@@ -7,12 +7,20 @@ export const register = async (data: {
   name: string;
   gender: 'male' | 'female' | 'other';
 }) => {
-  const response = await api.post('/auth/register', data); 
+  const response = await api.post('/auth/register', data);
+  const token = response.data.token;
+  
+  localStorage.setItem('token', token);
+
   return response.data;
 };
 
 export const login = async (email: string, password: string) => {
-  const response = await api.post('/auth/login', { email, password }); 
+  const response = await api.post('/auth/login', { email, password });
+  const token = response.data.token;
+  
+  localStorage.setItem('token', token);
+
   return response.data;
 };
 

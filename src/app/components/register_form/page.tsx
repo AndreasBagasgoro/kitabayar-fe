@@ -3,6 +3,9 @@ import InputField from '../input_field/page';
 import Button from '../button/page';
 import Logo from '../logo/page';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { register } from '../../../../services/api/auth';
+
 
 const RegisterForm: React.FC = () => {
   const [name, setName] = useState('');
@@ -10,11 +13,24 @@ const RegisterForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Register attempt with:', { name, email, password, confirmPassword });
-    // Add actual registration logic here
-  };
+  const router = useRouter();
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const res = await register({
+      name,
+      email,
+      password,
+      gender: 'male',
+    });
+
+    // localStorage.setItem('token', res.token);
+    router.push('/'); 
+  } catch (err) {
+    console.error('Registration failed', err);
+  }
+};
 
  
 
