@@ -5,15 +5,27 @@ import InputField from '../input_field/page';
 import Button from '../button/page';
 import Logo from '../logo/page';
 import Link from 'next/link';
+import { login } from '../../../../services/api/auth';
+import { useRouter } from 'next/navigation';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt with:', { email, password });
-    // Add actual login logic here
+
+    try {
+      const res = await login(email, password);
+      // localStorage.setItem('token', res.token);
+      router.push('/dashboard');
+    } catch (err: any) {
+      console.error('Login failed', err);
+      setError('Email atau password salah');
+    }
   };
 
   
@@ -25,6 +37,10 @@ const LoginForm: React.FC = () => {
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-[#d9291a]">Selamat datang di kITA BAYAR</h1>
       </div>
+
+      {error && (
+        <div className="mb-4 text-sm text-red-600 text-center">{error}</div>
+      )}
       
       <form onSubmit={handleSubmit} className="w-full space-y-1">
         <InputField

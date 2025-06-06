@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import React from 'react';
 
 interface NavbarProps {
@@ -46,12 +47,16 @@ const Navbar: React.FC<NavbarProps> = ({ className = '' }) => {
 
           {/* Action Buttons */}
           <div className="hidden md:flex items-center space-x-4">
+            <Link href="/auth/register">
             <button className="bg-[#d9291a] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#b8241a] transition-colors duration-200">
               Daftar
             </button>
+            </Link>
+            <Link href="/auth/login">
             <button className="text-[#d9291a] border border-[#d9291a] px-6 py-2 rounded-full text-sm font-medium hover:bg-[#d9291a] hover:text-white transition-colors duration-200">
               Masuk
             </button>
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -96,12 +101,16 @@ const Navbar: React.FC<NavbarProps> = ({ className = '' }) => {
           ))}
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex flex-col space-y-2 px-3">
+              <Link href="/auth/register">
               <button className="bg-[#d9291a] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#b8241a] transition-colors duration-200">
                 Daftar
               </button>
+              </Link>
+              <Link href="/auth/login">
               <button className="text-[#d9291a] border border-[#d9291a] px-6 py-2 rounded-full text-sm font-medium hover:bg-[#d9291a] hover:text-white transition-colors duration-200">
                 Masuk
               </button>
+              </Link>
             </div>
           </div>
         </div>
