@@ -3,15 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import SearchField from '@/app/components/ui/search/page';
 import MenuCard from '@/app/components/menu_card/page';
-import { useCart } from '@/app/components/context/page'; // Tambahkan import useCart
+import { useCart } from '@/app/components/context/page';
 import { getMenuItemsByRestaurant } from '../../../../services/api/menuItems';
 import { getRestaurants } from '../../../../services/api/restaurant';
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/app/context/AuthContext';
+import ProtectedRoute from '@/app/components/protected_route/page';
 
-
-
-
-// Interface untuk MenuItem
 interface MenuItem {
   id: number;
   name: string;
@@ -21,45 +19,34 @@ interface MenuItem {
   description?: string;
 }
 
-// Interface untuk Cart Item
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface CartItem extends MenuItem {
   quantity: number;
 }
 
 const MenuPage: React.FC = () => {
-
   const router = useRouter();
-
-  // Ambil cart context
+  const { isAuthenticated, token, user } = useAuth();
   const { cartItems, addToCart, getTotalCartItems, getTotalCartPrice, formatRupiah } = useCart();
   
-
-  // State untuk menyimpan data menu
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [loading, setLoading] = useState<boolean>(true);
-  
-  
-  // State untuk cart
-  const [showCartNotification, setShowCartNotification] = useState<boolean>(false);
-
-  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [showCartNotification, setShowCartNotification] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setIsAuthenticated(false);
-      router.replace('/login');
-    } else {
-      setIsAuthenticated(true);
-    }
-  }, [router]);
+    const checkAuth = async () => {
+      console.log('Menu page auth check:', { isAuthenticated, token, user });
+      if (!isAuthenticated || !token) {
+        console.log('Not authenticated, redirecting to login');
+        router.replace('/auth/login');
+      }
+    };
+    checkAuth();
+  }, [router, isAuthenticated, token, user]);
 
-    useEffect(() => {
+  useEffect(() => {
     const loadMenuData = async () => {
       try {
         setLoading(true);
@@ -76,16 +63,13 @@ const MenuPage: React.FC = () => {
     loadMenuData();
   }, []);
 
-    // useEffect untuk filter berdasarkan search dan category
   useEffect(() => {
     let filtered = menuItems;
 
-    // Filter berdasarkan category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
 
-    // Filter berdasarkan search query
     if (searchQuery.trim()) {
       filtered = filtered.filter(item =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,7 +80,6 @@ const MenuPage: React.FC = () => {
     setFilteredItems(filtered);
   }, [searchQuery, selectedCategory, menuItems]);
 
-  // useEffect untuk hide notification setelah 3 detik
   useEffect(() => {
     if (showCartNotification) {
       const timer = setTimeout(() => {
@@ -106,17 +89,20 @@ const MenuPage: React.FC = () => {
     }
   }, [showCartNotification]);
 
-    if (isAuthenticated === null) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d9291a]"></div>
-      </div>
-    );
-  }
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
 
-  if (!isAuthenticated) return null;
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
 
-  // Categories untuk filter
+  const handleAddToCart = (item: MenuItem) => {
+    addToCart(item);
+    setShowCartNotification(true);
+    console.log('Item added to cart:', item);
+  };
+
   const categories = [
     { id: 'all', name: 'Semua Menu' },
     { id: 'traditional', name: 'Tradisional' },
@@ -126,25 +112,6 @@ const MenuPage: React.FC = () => {
     { id: 'salad', name: 'Salad' }
   ];
 
-  // Handler untuk search
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  // Handler untuk category change
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-  };
-
-  // Handler untuk add to cart, gunakan context
-  const handleAddToCart = (item: MenuItem) => {
-    addToCart(item);
-    setShowCartNotification(true);
-    
-    console.log('Item added to cart:', item);
-  };
-
-  // Loading component
   if (loading) {
     return (
       <div className="space-y-6">
@@ -160,146 +127,144 @@ const MenuPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 relative">
-      {/* Cart Notification */}
-      {showCartNotification && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in-right">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span>Item berhasil ditambahkan ke keranjang!</span>
+    <ProtectedRoute>
+      <div className="space-y-6">
+        {/* Cart Notification */}
+        {showCartNotification && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in-right">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Item berhasil ditambahkan ke keranjang!</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Header Section */}
-      <section>
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">Our Menu</h1>
-            <h3 className="text-gray-600">Discover our delicious selection of carefully crafted dishes</h3>
-          </div>
-          
-          {/* Cart Summary */}
-          {cartItems.length > 0 && (
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#d9291a] rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 11-4 0v-6m4 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-800">{getTotalCartItems()} items</p>
-                  <p className="text-sm text-gray-600">Rp {formatRupiah(getTotalCartPrice())}</p>
+        {/* Header Section */}
+        <section>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Our Menu</h1>
+              <h3 className="text-gray-600">Discover our delicious selection of carefully crafted dishes</h3>
+            </div>
+            
+            {/* Cart Summary */}
+            {cartItems.length > 0 && (
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#d9291a] rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 11-4 0v-6m4 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">{getTotalCartItems()} items</p>
+                    <p className="text-sm text-gray-600">Rp {formatRupiah(getTotalCartPrice())}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
 
-      {/* Search Section */}
-      <section>
-        <SearchField onSearch={handleSearch} placeholder="Cari menu favorit Anda..." />
-      </section>
+        {/* Search Section */}
+        <section>
+          <SearchField onSearch={handleSearch} placeholder="Cari menu favorit Anda..." />
+        </section>
 
-      {/* Category Filter */}
-      <section>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => handleCategoryChange(category.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                selectedCategory === category.id
-                  ? 'bg-[#d9291a] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section>
-        <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
-          <p className="text-gray-600">
-            Menampilkan <span className="font-semibold">{filteredItems.length}</span> dari{' '}
-            <span className="font-semibold">{menuItems.length}</span> menu
-          </p>
-          {searchQuery && (
-            <p className="text-sm text-gray-500">
-              Hasil pencarian untuk: &quot;<span className="font-medium">{searchQuery}</span>&quot;
-            </p>
-          )}
-        </div>
-      </section>
-
-      {/* Menu Grid */}
-      <section>
-        {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
-              <MenuCard
-                key={item.id}
-                item={item}
-                onAddToCart={handleAddToCart}
-              />
+        {/* Category Filter */}
+        <section>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => handleCategoryChange(category.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                  selectedCategory === category.id
+                    ? 'bg-[#d9291a] text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {category.name}
+              </button>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Menu tidak ditemukan</h3>
-            <p className="text-gray-500 mb-4">
-              Coba ubah kata kunci pencarian atau pilih kategori yang berbeda
+        </section>
+
+        {/* Stats Section */}
+        <section>
+          <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
+            <p className="text-gray-600">
+              Menampilkan <span className="font-semibold">{filteredItems.length}</span> dari{' '}
+              <span className="font-semibold">{menuItems.length}</span> menu
             </p>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('all');
-              }}
-              className="bg-[#d9291a] text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            {searchQuery && (
+              <p className="text-sm text-gray-500">
+                Hasil pencarian untuk: &quot;<span className="font-medium">{searchQuery}</span>&quot;
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* Menu Grid */}
+        <section>
+          {filteredItems.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredItems.map((item) => (
+                <MenuCard
+                  key={item.id}
+                  item={item}
+                  onAddToCart={handleAddToCart}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Menu tidak ditemukan</h3>
+              <p className="text-gray-500 mb-4">
+                Coba ubah kata kunci pencarian atau pilih kategori yang berbeda
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                }}
+                className="bg-[#d9291a] text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Reset Filter
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Floating Cart Button */}
+        {cartItems.length > 0 && (
+          <div className="fixed bottom-6 right-6 z-40">
+            <button 
+              className="bg-[#d9291a] hover:bg-red-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+              onClick={() => router.push('/dashboard/checkout')}
             >
-              Reset Filter
+              <div className="relative">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 11-4 0v-6m4 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                </svg>
+                {getTotalCartItems() > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-white text-[#d9291a] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    {getTotalCartItems()}
+                  </span>
+                )}
+              </div>
             </button>
           </div>
         )}
-      </section>
-
-      {/* Floating Cart Button - hanya muncul jika ada items di cart */}
-      {cartItems.length > 0 && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <button 
-            className="bg-[#d9291a] hover:bg-red-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
-            onClick={() => {
-              // Navigate to checkout atau buka cart modal
-              console.log('Navigate to cart/checkout');
-              alert(`Cart: ${getTotalCartItems()} items - Rp ${formatRupiah(getTotalCartPrice())}`);
-            }}
-          >
-            <div className="relative">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 11-4 0v-6m4 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
-              </svg>
-              {getTotalCartItems() > 0 && (
-                <span className="absolute -top-2 -right-2 bg-white text-[#d9291a] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                  {getTotalCartItems()}
-                </span>
-              )}
-            </div>
-          </button>
-        </div>
-      )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 };
   
